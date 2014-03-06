@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #Hiddenblade
 #SMS based moderator program for Assassins
 #http://en.wikipedia.org/wiki/Assassin_(game)
