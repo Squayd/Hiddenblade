@@ -88,6 +88,8 @@ class Hiddenblade(object):
 	def get_target(self,player_phone):
 		#Takes a phone number as an int to identify a player and returns that  player's target as a Player() object. If the
 		#player is not found, returns None
+		###TODO we'll have to change this if our roster updates status instead of removing
+		### players from the list.. have to make sure player is alive before returning as target
 		target = "None"
 		for i in range(len(self.roster)):
 			if (self.roster[i].phone == player_phone):
