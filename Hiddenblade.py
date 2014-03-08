@@ -91,7 +91,7 @@ class Hiddenblade(object):
 		target = "None"
 		for i in range(len(self.roster)):
 			if (self.roster[i].phone == player_phone):
-				if i == (len(roster) - 1): #wrap around to start if selected player is last in the list
+				if i == (len(self.roster) - 1): #wrap around to start if selected player is last in the list
 					target =  self.roster[0]
 				else:
 					target = self.roster[i+1]
