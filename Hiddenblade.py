@@ -11,6 +11,8 @@
 
 import random
 import sys
+import itertools
+import time
 
 ALIVE = True
 DEAD = False
@@ -21,10 +23,21 @@ class Hiddenblade(object):
 	# The main game itself.
 	# TODO Add functionality to pass a filename. If a filename is passed, 
 	# check it for a valid game session and load it.
-	def __init__(self,player_list):
+	def __init__(self,player_list,filename=""):
 		#run the actual game here
 		self.roster = player_list
-		self.dead_players = []  # maybe we dont need this if we just have roster
+		self.dead_players = []  # maybe we don't need this if we just have roster
+		
+		#we should probably come up with some rules about file formatting...
+		# like a file of names for a new game could have name_list as the first line
+		# file for saved game could have saved_game as the first line
+		# OR there could be a default save file that we could check no matter what
+		# when a game is started, and if it doesn't exist or is empty, then we can 
+		# prompt for the list of names, whether by manual input or file input
+		##
+		## i recommend looking into "pickle" as a way to save game state
+		##
+		if filename != "": self.read_names(filename)
 		
 		#Thinking about the sequence
 		#Program gets run on my server box
@@ -65,57 +78,67 @@ class Hiddenblade(object):
 		#   if SMS beings with 'dead' remove the player who sent the text from the list
 		#		and provide the killer with info on his/her next target
 		### sounds good, maybe everything after the keyword 'Kill' or 'dead' can be a description of how
-		### it happened? i liked reading your texts about kevin's drink and your venom attack
-		### another thought is that in the event of poison, maybe the person who died has to be the one
+		### it happened? I liked reading your texts about kevin's drink and your venom attack.
+		### Another thought is that in the event of poison, maybe the person who died has to be the one
 		### to report it, since the killer might not know exactly when it happened in that case.
-		### i think i like immediate notification versus nightly recap, since a player can text 
-		### 'surviors' to find out who is left anyway. and stuff doesnt necessarily happen every day
+		### I think I like immediate notification versus nightly recap, since a player can text 
+		### 'survivors' to find out who is left anyway. and stuff doesn't necessarily happen every day
 		#While waiting, possibly listen for console commands?
 		### could have one game thread running in background, and the mainline can 
 		### list a console menu with options or something (add player, pause game, stop game, etc)
 		### that way if you had to restart the server, you could bring down the game in a safe way that would
 		### write everything out in such a way that it could just be started up again later
-		
+
+
+######################## OPERATIONS TO THE ROSTER ########################
 	def add_player(self,player):
-		self.roster.append(player) #keep a separate list of all players
-	def kill_player(self,killed_player,killer_player):
+	#keep a list of all players
+		self.roster.append(player) 
+	def remove_player(self,player):
+	# in case someone wants to quit
+		self.roster.remove(player)
+	def get_roster(self): 
+	# not sure this is necessary since we already have a direct reference to it
+		for player in self.roster:
+			yield player
+	def get_living(self):
+	#returns a generator of all living members in self.roster
+		for player in self.roster:
+			if player.status == ALIVE:
+				yield player
+	def get_dead(self):
+	#returns a generator of all dead members in self.roster
+		for player in self.roster:
+			if player.status == DEAD:
+				yield player
+	def kill_player(self,killed_player):
+	# changes killed_player's status from ALIVE to DEAD
+	# record info in their player object on who killed them,
+	# when they were killed, and the description of the death
 		#get date/time somehow
 		self.dead_players.append(killed_player)
+		killer_player = self.get_hunter(killed_player)
+		killer_player.killed_phone.append(killed_player.phone)
 		killed_player.status = DEAD
 		killed_player.killer_phone = killer_player.phone
-		killed_player.date_killed = 0
+		killed_player.date_killed = time.strftime("%H:%M:%S, %Y/%m/%d")
 		
-	def get_target(self,player_phone):
-		#Takes a phone number as an int to identify a player and returns that  player's target as a Player() object. If the
-		#player is not found, returns None
-		###TODO we'll have to change this if our roster updates status instead of removing
-		### players from the list.. have to make sure player is alive before returning as target
-		target = "None"
-		for i in range(len(self.roster)):
-			if (self.roster[i].phone == player_phone):
-				if i == (len(self.roster) - 1): #wrap around to start if selected player is last in the list
-					target =  self.roster[0]
-				else:
-					target = self.roster[i+1]
-		return target
-	#Do we need an analog to this function that returns the previous player?
-	### sure, why not :D get_hunter or something
-			
-	def save(self):
-		#save the game session to a file.
-		pass
-	def print_roster(self):
-		for c in self.roster:
-			print c.name,"\t",c.phone,"\t",
-			if c.status == ALIVE: print "Alive"
-			else: print "Dead"
-			if (c.status == DEAD):
-				print "  killed by:\t", c.killer_phone,
-				print "  died on:\t",c.date_killed
-				print "  killed:\t",c.killed_phone
-		print "count: ",len(self.roster) 
-		print		
-		
+	def get_target(self,hunter_player):
+	#returns the target of the player who is passed in		
+		theLiving = list(self.get_living())
+		theIndex = theLiving.index(hunter_player)
+		if  theIndex == len(theLiving)-1:
+			return theLiving[0] #if last player, his/her target is first player
+		else: return theLiving[theIndex+1]
+	def get_hunter(self,target_player):
+	#returns the hunter of the player who was passed in
+		theLiving = list(self.get_living())
+		theIndex = theLiving.index(target_player)
+		if  theIndex == 0:
+			return theLiving[len(theLiving)-1] #if first player, his/her hunter is last player
+		else: return theLiving[theIndex-1]
+
+######################## CORE GAME FUNCTIONS ########################
 	def start_game(self):
 		#this will have to do more than just shuffle...
 		random.shuffle(self.roster)
@@ -124,7 +147,38 @@ class Hiddenblade(object):
 		#maybe this can be called automatically from the main loop when the list reaches size 1
 		## yeah, or maybe when a player is eliminated, the assassin gets assigned a new target.
 		## end the game when the target becomes themself? I don't now, there are a billion ways.
+		pass			
+	def save(self):
+		#save the game session to a file.
 		pass
+	def read_names(self,filename): #TODO
+	#read a file to get names for the roster.
+		theFile = open(filename,'r')
+
+######################## PRINT FUNCTIONS ########################
+	def print_roster(self):
+		for c in self.get_roster():
+			self.print_player(c)
+		print ("count: ",len(self.roster))
+	def print_player(self,player):
+		print (player.name,player.phone, sep="\t",end="\t")
+		if player.status == ALIVE: print ("Alive")
+		else: print ("Dead")
+		if len(player.killed_phone) != 0 :
+			print ("  killed:\t",player.killed_phone)
+		if (player.status == DEAD):
+			print ("  killed by:\t", player.killer_phone)
+			print ("  died on:\t",player.date_killed)
+
+	def print_living(self):
+		for c in self.get_living():
+			self.print_player(c)
+	def print_dead(self):
+		for c in self.get_dead():
+			self.print_player(c)
+			
+		
+
 		
 		
 class Player(object):
@@ -137,7 +191,7 @@ class Player(object):
 	###### Yeah, I got kinda stuck on linked list because it fits the idea of the way players relate to
 	###### each other, but it's not necessary when we'd have to implement it ourselves and if we're saving
 	###### to a flat file it's going to be a pain to rebuild that.
-	def __init__(self, name,phone, status=ALIVE):
+	def __init__(self, name, phone, status=ALIVE):
 		self.name = name
 		self.status = status
 		self.killer_phone = ""  # phone of this player's killer
@@ -160,15 +214,22 @@ if __name__ == '__main__':
 	p5 = Player("Ben",5209816884)
 
 	theGame = Hiddenblade([p1,p2,p3])
-	theGame.print_roster()
-	theGame.start_game()	
-	theGame.print_roster()
+	
+	#theGame.start_game()	
+	
 	
 	theGame.add_player(p4)
-	theGame.print_roster()
-	theGame.kill_player(p2,p3)
-	theGame.print_roster()
 	theGame.add_player(p5)
-	theGame.print_roster()
+	
+	theGame.kill_player(p4)
 	
 	
+	
+	print("trying the experiment with generators")
+	theGame.print_living()
+	theGame.print_dead()
+	print("player 3's target is:",end=" ")
+	theGame.print_player(theGame.get_target(p1))
+	print("player 3's hunter is:",end=" ")
+	theGame.print_player(theGame.get_hunter(p1))
+	#print(list(theGame.get_living()))
