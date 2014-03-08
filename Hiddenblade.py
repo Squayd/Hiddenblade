@@ -16,24 +16,26 @@ class Hiddenblade(object):
 	## i think main game class makes sense, but probably dont need playerlist class
 	# TODO Add functionality to pass a filename. If a filename is passed, 
 	# check it for a valid game session and load it.
-	def __init__(self,players):
+	def __init__(self,living_players):
 		#run the actual game here
-		self.players = players
+		self.living_players = living_players
+		self.dead_players = []
 	def add_player(self,player):
-		self.players.append(player)
+		self.living_players.append(player)
 	def kill_player(self,player):
-		self.players.remove(player)
+		self.dead_players.append(player)
+		self.living_players.remove(player)
 	def save(self):
 		#save the game session to a file.
 		pass
-	def print_players(self):
-		for c in self.players:
+	def print_living_players(self):
+		for c in self.living_players:
 			print c.name, c.status
-		print "count: ",len(self.players) 
+		print "count: ",len(self.living_players) 
 		print		
 	def start_game(self):
 		#this will have to do more than just shuffle...
-		random.shuffle(self.players)
+		random.shuffle(self.living_players)
 	def end_game(self):
 		#write final stats to a stats file and exit?
 		#maybe this can be called automatically from the main loop when the list reaches size 1
@@ -45,7 +47,7 @@ class Player(object):
 	#target and hunter act as next and previous list items.
 	### python doesnt really have linked lists, but they have regular list support built in
 	### I think it would be best to just keep a list, and use existing list.remove function
-	### to delete players... player's target is next in list (first if they are last)
+	### to delete living_players... player's target is next in list (first if they are last)
 	### player's hunter is previous in list (last if they are first)
 	def __init__(self, name, status=True):
 		self.name = name
@@ -64,15 +66,15 @@ if __name__ == '__main__':
 	p5 = Player("Ben")
 	
 	theGame = Hiddenblade([p1,p2,p3])
-	theGame.print_players()
+	theGame.print_living_players()
 	theGame.start_game()	
-	theGame.print_players()
+	theGame.print_living_players()
 	
 	theGame.add_player(p4)
-	theGame.print_players()
+	theGame.print_living_players()
 	theGame.kill_player(p2)
-	theGame.print_players()
+	theGame.print_living_players()
 	theGame.add_player(p5)
-	theGame.print_players()
+	theGame.print_living_players()
 	
 	
