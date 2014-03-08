@@ -10,6 +10,12 @@
 #stockbauer@gmail.com
 
 import random
+import sys
+
+ALIVE = True
+DEAD = False
+NEW_GAME = False
+SAVED_GAME = True
 
 class Hiddenblade(object):
 	# The main game itself.
@@ -56,16 +62,16 @@ class Hiddenblade(object):
 	def kill_player(self,player):
 		self.players.remove(player)
 		
-	def get_target(self,player)
-		#returns the selected player's target as a Player() object. If the
+	def get_target(self,player_phone)
+		#Takes a phone number as an int to identify a player and returns that  player's target as a Player() object. If the
 		#player is not found, returns None
+                target = None
 		for i in range(len(self.players))
-			#If the called player is the last player, wrap around to the first
-			if i == (len(self.players) - 1)
-				return self.players[0]
-			else if self.players[i] == player
-				return self.players[i+1]
-				else return None
+			if self.players[i].phone == player_phone
+                            if i == (len(players) - 1) #wrap around to start if selected player is last in the list
+				target =  self.players[0]
+			    else target = self.players[i+1]
+                return target
 	#Do we need an analog to this function that returns the previous player?
 			
 	def save(self):
@@ -114,8 +120,8 @@ if __name__ == '__main__':
 	p3 = Player("kevin")
 	p4 = Player("RB")
 	p5 = Player("Ben")
-	
-	theGame = Hiddenblade([p1,p2,p3])
+
+        theGame = Hiddenblade([p1,p2,p3])
 	theGame.print_players()
 	theGame.start_game()	
 	theGame.print_players()
