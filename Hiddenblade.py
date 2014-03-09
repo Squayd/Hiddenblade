@@ -13,6 +13,7 @@ import random
 import sys
 import itertools
 import time
+import pickle
 
 ALIVE = True
 DEAD = False
@@ -143,14 +144,26 @@ class Hiddenblade(object):
 		#this will have to do more than just shuffle...
 		random.shuffle(self.roster)
 	def end_game(self):
-		#write final stats to a stats file and exit?
+		#write final stats to a file and exit?
 		#maybe this can be called automatically from the main loop when the list reaches size 1
 		## yeah, or maybe when a player is eliminated, the assassin gets assigned a new target.
 		## end the game when the target becomes themself? I don't now, there are a billion ways.
 		pass			
 	def save(self):
-		#save the game session to a file.
-		pass
+	#save the game session to a file.
+	#use pickle for saving game state, but when game ends, write a more universal CSV style
+	#file for stat analysis
+	#
+	#do we use the same savefile name every time and only allow 1 saved game? (would we really need
+	# to have more than 1 game saved at a time?). This implementation uses date/time to make a filename
+	# so if you call the save function multiple times, you'll get multiple files.. this can build up fast
+		savefile = "save_game_"+time.strftime("%Y%m%d_%H%M%S")
+		pickle.dump(self.roster, open(savefile, "wb"))
+		return savefile
+	def load(self,filename):
+	#load the game objects from a saved file
+		self.roster = pickle.load(open(filename, "rb"))
+		
 	def read_names(self,filename): #TODO
 	#read a file to get names for the roster.
 		theFile = open(filename,'r')
@@ -171,11 +184,17 @@ class Hiddenblade(object):
 			print ("  died on:\t",player.date_killed)
 
 	def print_living(self):
+		count = 0
 		for c in self.get_living():
 			self.print_player(c)
+			count = count + 1
+		print ("living count: ",count)
 	def print_dead(self):
+		count = 0
 		for c in self.get_dead():
 			self.print_player(c)
+			count = count + 1
+		print ("death count: ",count)
 			
 		
 
@@ -217,13 +236,9 @@ if __name__ == '__main__':
 	
 	#theGame.start_game()	
 	
-	
 	theGame.add_player(p4)
 	theGame.add_player(p5)
-	
 	theGame.kill_player(p4)
-	
-	
 	
 	print("trying the experiment with generators")
 	theGame.print_living()
@@ -233,3 +248,10 @@ if __name__ == '__main__':
 	print("player 3's hunter is:",end=" ")
 	theGame.print_player(theGame.get_hunter(p1))
 	#print(list(theGame.get_living()))
+	
+	thefile = theGame.save() # save the game
+	theGame.kill_player(p3) # kill someone
+	theGame.print_living() # p3 is dead
+	theGame.load(thefile) # load saved game
+	theGame.print_living() # p3 is back among the living!
+	
