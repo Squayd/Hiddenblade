@@ -24,7 +24,7 @@ class Hiddenblade(object):
 	# The main game itself.
 	# TODO Add functionality to pass a filename. If a filename is passed, 
 	# check it for a valid game session and load it.
-	def __init__(self,player_list,filename=""):
+	def __init__(self,player_list=[],filename=""):
 		#run the actual game here
 		self.roster = player_list
 		self.dead_players = []  # maybe we don't need this if we just have roster
@@ -138,6 +138,11 @@ class Hiddenblade(object):
 		if  theIndex == 0:
 			return theLiving[len(theLiving)-1] #if first player, his/her hunter is last player
 		else: return theLiving[theIndex-1]
+	def get_player_by_number(self,phone_num):
+		for player in self.roster:
+			if player.phone == phone_num:
+				return player
+		return None
 
 ######################## CORE GAME FUNCTIONS ########################
 	def start_game(self):
@@ -157,7 +162,7 @@ class Hiddenblade(object):
 	#do we use the same savefile name every time and only allow 1 saved game? (would we really need
 	# to have more than 1 game saved at a time?). This implementation uses date/time to make a filename
 	# so if you call the save function multiple times, you'll get multiple files.. this can build up fast
-		savefile = "save_game_"+time.strftime("%Y%m%d_%H%M%S")
+		savefile = "save_game"
 		pickle.dump(self.roster, open(savefile, "wb"))
 		return savefile
 	def load(self,filename):
@@ -195,9 +200,6 @@ class Hiddenblade(object):
 			self.print_player(c)
 			count = count + 1
 		print ("death count: ",count)
-			
-		
-
 		
 		
 class Player(object):
