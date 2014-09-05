@@ -43,13 +43,13 @@ import queue
 
 
 #valid actions that can be taken via SMS
-ACTIONS = [	'list_players', 
-			'list_living',
-			'give_target',
-			'kill_target',
-			'kill_self',
-			'send_broadcast',
-			'get_options'
+ACTIONS = [	'list_players',		#0
+			'list_living',		#1
+			'give_target',		#2
+			'kill_target',		#3
+			'kill_self',		#4
+			'send_broadcast',	#5
+			'get_options'		#6
 		  ]
 ACTION_WORDS = {'players': ACTIONS[0],
 		        'survivors': ACTIONS[1],
@@ -82,27 +82,27 @@ def message_parser(message):
 	#send back an error message since the text must contain a valid action
 		if action not in ACTION_WORDS:
 			print('action not found')
-		elif ACTION_WORDS[action] == 'list_players':
+		elif ACTION_WORDS[action] == ACTIONS[0]:
 			print('requested a list of players')
 			theGame.print_roster()
-		elif ACTION_WORDS[action] == 'list_living':
+		elif ACTION_WORDS[action] == ACTIONS[1]:
 			print('requested a list of LIVING players')
 			theGame.print_living()
-		elif ACTION_WORDS[action] =='give_target' and living:
+		elif ACTION_WORDS[action] == ACTIONS[2] and living:
 			print('requested personal target')
 			print('your target is: ',(theGame.get_target(theSender)).name)
-		elif ACTION_WORDS[action] == 'kill_target' and living:
+		elif ACTION_WORDS[action] == ACTIONS[3] and living:
 			target = theGame.get_target(theSender)
 			theGame.kill_player(target)
 			print(target.name,' has been removed from the living')
 			print(target.name," ",description)
-		elif ACTION_WORDS[action] == 'kill_self' and living:
+		elif ACTION_WORDS[action] == ACTIONS[4] and living:
 			print('requested self death')
 			theGame.kill_player(theSender)
 			print('broadcast: ',theSender.name," ",description)
-		elif ACTION_WORDS[action] == 'send_broadcast':
+		elif ACTION_WORDS[action] == ACTIONS[5]:
 			print('broadcast message:',description)
-		elif ACTION_WORDS[action] == 'get_options':
+		elif ACTION_WORDS[action] == ACTIONS[6]:
 			for x in ACTION_WORDS:
 				print(x)
 		
